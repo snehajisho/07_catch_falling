@@ -62,7 +62,8 @@ class GameEngine:
             obj.update()
 
         basket_rect = self.basket.get_rect()
-        for obj in self.objects:                  # BUG: mutating this list while iterating over it
+
+        for obj in self.objects[:]:
             if is_caught(basket_rect, obj):
                 self.score += 1
                 self.objects.remove(obj)
