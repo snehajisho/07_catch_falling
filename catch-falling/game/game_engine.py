@@ -22,6 +22,7 @@ MAX_OBJECTS = 6
 MIN_SPAWN_DISTANCE = 80
 
 MAX_MISSES = 5
+BOOST_DURATION_FRAMES = 180
 
 
 class GameEngine:
@@ -76,12 +77,24 @@ class GameEngine:
         )
 
     def handle_keydown(self, key):
-        if self.game_over and key == pygame.K_r:
-            self.__init__()
+        if self.game_over:
+            if key == pygame.K_r:
+                self.__init__()
+            return
+
+        if key == pygame.K_SPACE and self.basket.boosted_frames <= 0:
+            self.basket.boosted_frames = BOOST_DURATION_FRAMES
+            self.basket.speed = self.basket.boost_speed
 
     def update(self):
         if self.game_over:
             return
+
+        if self.basket.boosted_frames > 0:
+            self.basket.boosted_frames -= 1
+
+            if self.basket.boosted_frames == 0:
+                self.basket.speed = self.basket.normal_speed
 
         self.frames_until_spawn -= 1
 
@@ -110,9 +123,28 @@ class GameEngine:
 
     def draw(self, surface, font):
         from game import renderer
+
         renderer.draw_scene(surface, self.basket, self.objects)
         renderer.draw_text(surface, font, f"Score: {self.score}", (10, 10))
-        renderer.draw_text(surface, font, f"Misses: {self.misses}/{MAX_MISSES}", (10, 36))
+        renderer.draw_text(
+            surface,
+            font,
+            f"Misses: {self.misses}/{MAX_MISSES}",
+            (10, 36),
+        )
+
+        if self.basket.boosted_frames > 0:
+            remaining_seconds = self.basket.boosted_frames / 60
+            renderer.draw_text(
+                surface,
+                font,
+                f"SPEED BOOST! {remaining_seconds:.1f}s",
+                (10, 62),
+            )
 
         if self.game_over:
-            renderer.draw_banner(surface, font, f"Game Over! Final score: {self.score}. Press R to restart.")
+            renderer.draw_banner(
+                surface,
+                font,
+                f"Game Over! Final score: {self.score}. Press R to restart.",
+            )
